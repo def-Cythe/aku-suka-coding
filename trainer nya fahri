@@ -1,0 +1,329 @@
+import tkinter as tk
+import random
+import time
+
+# ----------------------------------------
+# BLUE NEON THEME COLORS
+# ----------------------------------------
+BG_MAIN = "#0B1A2A"         # Dark deep blue
+BG_PANEL = "#112233"        # Slightly brighter panel BG
+ACCENT = "#2EE3FF"          # Neon cyan
+TEXT_LIGHT = "#CCEEFF"      # Light bluish white
+BUTTON_HOVER = "#5AF1FF"    # Bright cyan on hover
+
+# Target neon colors
+TARGET_OUTER = "#FFB800"    # Neon yellow
+TARGET_INNER = "#FFD84D"    # Soft neon yellow
+TARGET_BORDER = "#FF9900"   # Deeper yellow/orange border
+
+class AimTrainer:
+    # --------------------------------------------------
+    # 1. INITIALIZATION
+    # --------------------------------------------------
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Aim Trainer")
+        self.root.geometry("800x800")
+        self.root.configure(bg=BG_MAIN)
+
+        self.root.withdraw()  # hide until ready
+
+        self.show_intro_popup()
+
+    # --------------------------------------------------
+    # HOVER EFFECT
+    # --------------------------------------------------
+    def add_hover(self, widget):
+        widget.bind("<Enter>", lambda e: widget.config(bg=BUTTON_HOVER))
+        widget.bind("<Leave>", lambda e: widget.config(bg=ACCENT))
+
+    # --------------------------------------------------
+    # INTRO SCREEN
+    # --------------------------------------------------
+    def show_intro_popup(self):
+        self.intro = tk.Toplevel(self.root)
+        self.intro.title("Aim Trainer")
+        self.intro.geometry("350x220")
+        self.intro.configure(bg=BG_PANEL)
+        self.intro.grab_set()
+
+        tk.Label(
+            self.intro, text="AIM TRAINER",
+            font=("Bahnschrift SemiBold", 28),
+            bg=BG_PANEL, fg=ACCENT
+        ).pack(pady=20)
+
+        play_btn = tk.Button(
+            self.intro, text="PLAY",
+            font=("Bahnschrift SemiBold", 16),
+            width=10,
+            bg=ACCENT, fg="black",
+            relief="flat",
+            command=self.go_to_settings
+        )
+        play_btn.pack(pady=20)
+        self.add_hover(play_btn)
+
+    def go_to_settings(self):
+        self.intro.destroy()
+        self.show_settings_popup()
+
+    # --------------------------------------------------
+    # SETTINGS SCREEN
+    # --------------------------------------------------
+    def show_settings_popup(self):
+        self.popup = tk.Toplevel(self.root)
+        self.popup.title("Game Settings")
+        self.popup.geometry("350x280")
+        self.popup.configure(bg=BG_PANEL)
+        self.popup.grab_set()
+
+        def label(t):
+            return tk.Label(self.popup, text=t, font=("Bahnschrift", 14),
+                            bg=BG_PANEL, fg=TEXT_LIGHT)
+
+        label("Enter time limit (seconds):").pack(pady=10)
+        self.time_entry = tk.Entry(self.popup, font=("Bahnschrift", 14),
+                                   bg="#0D1B2A", fg=TEXT_LIGHT, insertbackground="white")
+        self.time_entry.insert(0, "30")
+        self.time_entry.pack()
+
+        label("Enter target radius (pixels):").pack(pady=10)
+        self.radius_entry = tk.Entry(self.popup, font=("Bahnschrift", 14),
+                                     bg="#0D1B2A", fg=TEXT_LIGHT, insertbackground="white")
+        self.radius_entry.insert(0, "25")
+        self.radius_entry.pack()
+
+        start_btn = tk.Button(
+            self.popup, text="START",
+            font=("Bahnschrift SemiBold", 16),
+            bg=ACCENT, fg="black",
+            relief="flat", width=10,
+            command=self.start_game
+        )
+        start_btn.pack(pady=20)
+        self.add_hover(start_btn)
+
+    # --------------------------------------------------
+    # START GAME
+    # --------------------------------------------------
+    def start_game(self):
+        self.game_over = False
+
+        try:
+            self.game_duration = float(self.time_entry.get())
+        except:
+            self.game_duration = 30
+
+        try:
+            self.target_radius = int(self.radius_entry.get())
+        except:
+            self.target_radius = 25
+
+        self.popup.destroy()
+        self.root.deiconify()
+
+        self.canvas = tk.Canvas(
+            self.root, bg="#0A1622", width=800, height=550, highlightthickness=0
+        )
+        self.canvas.pack()
+
+        # Spawn area
+        self.spawn_x1, self.spawn_y1 = 150, 80
+        self.spawn_x2, self.spawn_y2 = 650, 480
+
+        self.canvas.create_rectangle(
+            self.spawn_x1, self.spawn_y1,
+            self.spawn_x2, self.spawn_y2,
+            outline=ACCENT, width=3
+        )
+
+        # Stats
+        self.hits = 0
+        self.misses = 0
+        self.targets = []
+        self.start_time = time.time()
+
+        def lab(text):
+            return tk.Label(self.root, text=text, font=("Bahnschrift", 16),
+                            bg=BG_MAIN, fg=TEXT_LIGHT)
+
+        self.score_label = lab("Score: 0"); self.score_label.pack()
+        self.accuracy_label = lab("Accuracy: 100%"); self.accuracy_label.pack()
+        self.time_label = lab("Time: 0.00s"); self.time_label.pack()
+
+        self.create_top_buttons()
+
+        self.root.bind("<Button-1>", self.click_target)
+
+        self.spawn_target()
+        self.update_time()
+
+    # --------------------------------------------------
+    # RESTART / EXIT BUTTONS
+    # --------------------------------------------------
+    def create_top_buttons(self):
+        frame = tk.Frame(self.root, bg=BG_MAIN)
+        frame.place(x=620, y=10)
+
+        restart_btn = tk.Button(
+            frame, text="Restart",
+            font=("Bahnschrift SemiBold", 12),
+            bg=ACCENT, fg="black",
+            relief="flat",
+            command=self.restart_game
+        )
+        restart_btn.pack(side="left", padx=5)
+        self.add_hover(restart_btn)
+
+        exit_btn = tk.Button(
+            frame, text="Exit",
+            font=("Bahnschrift SemiBold", 12),
+            bg=ACCENT, fg="black",
+            relief="flat",
+            command=self.root.quit
+        )
+        exit_btn.pack(side="left", padx=5)
+        self.add_hover(exit_btn)
+
+    def restart_game(self):
+        for w in self.root.winfo_children():
+            w.destroy()
+        self.root.withdraw()
+        self.targets = []
+        self.game_over = False
+        self.show_settings_popup()
+
+    # --------------------------------------------------
+    # SPAWN TARGETS (3 ACTIVE)
+    # --------------------------------------------------
+    def spawn_target(self):
+        if self.game_over: return
+
+        while len(self.targets) < 3:
+            r = self.target_radius
+            x = random.randint(self.spawn_x1 + r, self.spawn_x2 - r)
+            y = random.randint(self.spawn_y1 + r, self.spawn_y2 - r)
+
+            outer = self.canvas.create_oval(
+                x-r, y-r, x+r, y+r,
+                fill=TARGET_OUTER, outline=TARGET_BORDER, width=3
+            )
+            middle = self.canvas.create_oval(
+                x-r*0.6, y-r*0.6, x+r*0.6, y+r*0.6,
+                fill=BG_MAIN, outline=TARGET_OUTER, width=2
+            )
+            inner = self.canvas.create_oval(
+                x-r*0.28, y-r*0.28, x+r*0.28, y+r*0.28,
+                fill=TARGET_INNER, outline=TARGET_BORDER, width=2
+            )
+
+            self.targets.append((outer, middle, inner))
+
+    # --------------------------------------------------
+    # REMOVE TARGET
+    # --------------------------------------------------
+    def remove_target(self, target):
+        for part in target:
+            self.canvas.delete(part)
+        if target in self.targets:
+            self.targets.remove(target)
+        if not self.game_over:
+            self.spawn_target()
+
+    # --------------------------------------------------
+    # CLICK HANDLER
+    # --------------------------------------------------
+    def click_target(self, event):
+        clicked = False
+
+        for target in self.targets:
+            outer, mid, inner = target
+            x1, y1, x2, y2 = self.canvas.coords(outer)
+
+            if x1 <= event.x <= x2 and y1 <= event.y <= y2:
+                clicked = True
+                self.hits += 1
+                self.ripple_animation(event.x, event.y)
+                self.remove_target(target)
+                break
+
+        if not clicked:
+            self.misses += 1
+
+        self.score_label.config(text=f"Score: {self.hits}")
+
+        total = self.hits + self.misses
+        acc = (self.hits / total) * 100 if total else 100
+        self.accuracy_label.config(text=f"Accuracy: {acc:.2f}%")
+
+    # --------------------------------------------------
+    # YELLOW NEON RIPPLE
+    # --------------------------------------------------
+    def ripple_animation(self, x, y):
+        r = 5
+        ring = self.canvas.create_oval(
+            x-r, y-r, x+r, y+r, outline=TARGET_OUTER, width=2
+        )
+
+        def expand(step=0):
+            if step > 10:
+                self.canvas.delete(ring)
+                return
+
+            new_r = r + step * 4
+            self.canvas.coords(ring, x-new_r, y-new_r, x+new_r, y+new_r)
+
+            # fade neon yellow to darker orange
+            shade = max(0, 255 - step * 15)
+            color = f"#{shade:02x}{180:02x}00"
+            self.canvas.itemconfig(ring, outline=color)
+
+            self.root.after(25, lambda: expand(step+1))
+
+        expand()
+
+    # --------------------------------------------------
+    # TIMER UPDATE
+    # --------------------------------------------------
+    def update_time(self):
+        elapsed = time.time() - self.start_time
+        remaining = self.game_duration - elapsed
+
+        if remaining <= 0:
+            self.time_label.config(text="Time: 0.00s")
+            self.end_game()
+            return
+
+        self.time_label.config(text=f"Time: {remaining:.2f}s")
+        self.root.after(100, self.update_time)
+
+    # --------------------------------------------------
+    # GAME OVER
+    # --------------------------------------------------
+    def end_game(self):
+        self.game_over = True
+
+        for t in self.targets:
+            for part in t:
+                self.canvas.delete(part)
+        self.targets.clear()
+
+        total = self.hits + self.misses
+        acc = (self.hits / total) * 100 if total else 100
+
+        self.canvas.create_text(
+            400, 250,
+            text=f"GAME OVER\nScore: {self.hits}\nAccuracy: {acc:.2f}%",
+            font=("Bahnschrift SemiBold", 32),
+            fill=ACCENT
+        )
+
+
+# --------------------------------------------------
+# RUN GAME
+# --------------------------------------------------
+if __name__ == "__main__":
+    root = tk.Tk()
+    AimTrainer(root)
+    root.mainloop()
