@@ -2,49 +2,51 @@ import tkinter as tk
 import random
 import time
 
-# ----------------------------------------
-# BLUE NEON THEME COLORS
-# ----------------------------------------
-BG_MAIN = "#0B1A2A"         # Dark deep blue
-BG_PANEL = "#112233"        # Slightly brighter panel BG
-ACCENT = "#2EE3FF"          # Neon cyan
-TEXT_LIGHT = "#CCEEFF"      # Light bluish white
-BUTTON_HOVER = "#5AF1FF"    # Bright cyan on hover
+#Pengaturan warna pada elemen 
+BG_MAIN = "#091829"         # Warna latar belakang utama 
+BG_PANEL = "#0F2234"        # Warna popup
+ACCENT = "#2EE3FF"          # Aksen neon biru
+TEXT_LIGHT = "#CFEBF9"      # Warna teks
+BUTTON_HOVER = "#4FEEFC"    # Warna tombol ketika di-hover
+TARGET_OUTER = "#FFB800"
+TARGET_INNER = "#FFD84D"
+TARGET_BORDER = "#FF9900"
 
-# Target neon colors
-TARGET_OUTER = "#FFB800"    # Neon yellow
-TARGET_INNER = "#FFD84D"    # Soft neon yellow
-TARGET_BORDER = "#FF9900"   # Deeper yellow/orange border
 
 class AimTrainer:
-    # --------------------------------------------------
-    # 1. INITIALIZATION
-    # --------------------------------------------------
+
+    # ==========================================================
+    # 1. INISIALISASI (Constructor)
+    # ==========================================================
     def __init__(self, root):
         self.root = root
         self.root.title("Aim Trainer")
         self.root.geometry("800x800")
         self.root.configure(bg=BG_MAIN)
 
-        self.root.withdraw()  # hide until ready
+        # Sembunyikan jendela utama sampai game dimulai
+        self.root.withdraw()
 
-        self.show_intro_popup()
+        # Tampilkan popup intro
+        self.tampilkan_intro()
 
-    # --------------------------------------------------
-    # HOVER EFFECT
-    # --------------------------------------------------
-    def add_hover(self, widget):
+
+    # ==========================================================
+    # 2. EFEK HOVER UNTUK TOMBOL
+    # ==========================================================
+    def efek_hover(self, widget):
         widget.bind("<Enter>", lambda e: widget.config(bg=BUTTON_HOVER))
         widget.bind("<Leave>", lambda e: widget.config(bg=ACCENT))
 
-    # --------------------------------------------------
-    # INTRO SCREEN
-    # --------------------------------------------------
-    def show_intro_popup(self):
+
+    # ==========================================================
+    # 3. POPUP INTRO (Layar Awal)
+    # ==========================================================
+    def tampilkan_intro(self):
         self.intro = tk.Toplevel(self.root)
         self.intro.title("Aim Trainer")
-        self.intro.geometry("350x220")
         self.intro.configure(bg=BG_PANEL)
+        self.intro.geometry("350x220")
         self.intro.grab_set()
 
         tk.Label(
@@ -53,276 +55,296 @@ class AimTrainer:
             bg=BG_PANEL, fg=ACCENT
         ).pack(pady=20)
 
-        play_btn = tk.Button(
+        tombol_main = tk.Button(
             self.intro, text="PLAY",
             font=("Bahnschrift SemiBold", 16),
             width=10,
             bg=ACCENT, fg="black",
             relief="flat",
-            command=self.go_to_settings
+            command=self.buka_pengaturan
         )
-        play_btn.pack(pady=20)
-        self.add_hover(play_btn)
+        tombol_main.pack(pady=20)
+        self.efek_hover(tombol_main)
 
-    def go_to_settings(self):
+
+    def buka_pengaturan(self):
         self.intro.destroy()
-        self.show_settings_popup()
+        self.tampilkan_pengaturan()
 
-    # --------------------------------------------------
-    # SETTINGS SCREEN
-    # --------------------------------------------------
-    def show_settings_popup(self):
+
+    # ==========================================================
+    # 4. POPUP PENGATURAN (Waktu & Radius Target)
+    # ==========================================================
+    def tampilkan_pengaturan(self):
         self.popup = tk.Toplevel(self.root)
-        self.popup.title("Game Settings")
-        self.popup.geometry("350x280")
+        self.popup.title("Pengaturan Game")
         self.popup.configure(bg=BG_PANEL)
+        self.popup.geometry("350x280")
         self.popup.grab_set()
 
-        def label(t):
-            return tk.Label(self.popup, text=t, font=("Bahnschrift", 14),
+        def teks(judul):
+            return tk.Label(self.popup, text=judul, font=("Bahnschrift", 14),
                             bg=BG_PANEL, fg=TEXT_LIGHT)
 
-        label("Enter time limit (seconds):").pack(pady=10)
-        self.time_entry = tk.Entry(self.popup, font=("Bahnschrift", 14),
-                                   bg="#0D1B2A", fg=TEXT_LIGHT, insertbackground="white")
-        self.time_entry.insert(0, "30")
-        self.time_entry.pack()
+        teks("Durasi waktu (detik):").pack(pady=10)
+        self.masuk_waktu = tk.Entry(self.popup, font=("Bahnschrift", 14),
+                                bg="#0D1B2A", fg=TEXT_LIGHT, insertbackground="white")
+        self.masuk_waktu.insert(0, "30")
+        self.masuk_waktu.pack()
 
-        label("Enter target radius (pixels):").pack(pady=10)
-        self.radius_entry = tk.Entry(self.popup, font=("Bahnschrift", 14),
-                                     bg="#0D1B2A", fg=TEXT_LIGHT, insertbackground="white")
-        self.radius_entry.insert(0, "25")
-        self.radius_entry.pack()
+        teks("Radius target (piksel):").pack(pady=10)
+        self.masuk_radius = tk.Entry(self.popup, font=("Bahnschrift", 14),
+                                 bg="#0D1B2A", fg=TEXT_LIGHT, insertbackground="white")
+        self.masuk_radius.insert(0, "25")
+        self.masuk_radius.pack()
 
-        start_btn = tk.Button(
-            self.popup, text="START",
+        tombol_mulai = tk.Button(
+            self.popup, text="MULAI",
             font=("Bahnschrift SemiBold", 16),
             bg=ACCENT, fg="black",
             relief="flat", width=10,
-            command=self.start_game
+            command=self.mulai_game
         )
-        start_btn.pack(pady=20)
-        self.add_hover(start_btn)
+        tombol_mulai.pack(pady=20)
+        self.efek_hover(tombol_mulai)
 
-    # --------------------------------------------------
-    # START GAME
-    # --------------------------------------------------
-    def start_game(self):
+
+    # ==========================================================
+    # 5. MULAI GAME (Membuat UI Utama)
+    # ==========================================================
+    def mulai_game(self):
         self.game_over = False
 
+        # Baca input waktu
         try:
-            self.game_duration = float(self.time_entry.get())
+            self.durasi = float(self.masuk_waktu.get())
         except:
-            self.game_duration = 30
+            self.durasi = 30
 
+        # Baca input radius target
         try:
-            self.target_radius = int(self.radius_entry.get())
+            self.radius_target = int(self.masuk_radius.get())
         except:
-            self.target_radius = 25
+            self.radius_target = 25
 
         self.popup.destroy()
         self.root.deiconify()
 
-        self.canvas = tk.Canvas(
+        # Kanvas game
+        self.kanvas = tk.Canvas(
             self.root, bg="#0A1622", width=800, height=550, highlightthickness=0
         )
-        self.canvas.pack()
+        self.kanvas.pack()
 
-        # Spawn area
+        # Area spawn target
         self.spawn_x1, self.spawn_y1 = 150, 80
         self.spawn_x2, self.spawn_y2 = 650, 480
 
-        self.canvas.create_rectangle(
+        # Kotak area spawn
+        self.kanvas.create_rectangle(
             self.spawn_x1, self.spawn_y1,
             self.spawn_x2, self.spawn_y2,
             outline=ACCENT, width=3
         )
 
-        # Stats
-        self.hits = 0
-        self.misses = 0
+        # Statistik
+        self.tepat = 0
+        self.meleset = 0
         self.targets = []
-        self.start_time = time.time()
+        self.mulai_waktu = time.time()
 
-        def lab(text):
-            return tk.Label(self.root, text=text, font=("Bahnschrift", 16),
+        # Label UI
+        def label(t):
+            return tk.Label(self.root, text=t, font=("Bahnschrift", 16),
                             bg=BG_MAIN, fg=TEXT_LIGHT)
 
-        self.score_label = lab("Score: 0"); self.score_label.pack()
-        self.accuracy_label = lab("Accuracy: 100%"); self.accuracy_label.pack()
-        self.time_label = lab("Time: 0.00s"); self.time_label.pack()
+        self.label_skor = label("Skor: 0"); self.label_skor.pack()
+        self.label_akurasi = label("Akurasi: 100%"); self.label_akurasi.pack()
+        self.label_waktu = label("Waktu: 0.00s"); self.label_waktu.pack()
 
-        self.create_top_buttons()
+        # Tombol restart/exit
+        self.tampilkan_tombol_atas()
 
-        self.root.bind("<Button-1>", self.click_target)
+        # Event klik
+        self.root.bind("<Button-1>", self.klik_target)
 
+        # Mulai spawn target
         self.spawn_target()
-        self.update_time()
+        self.update_waktu()
 
-    # --------------------------------------------------
-    # RESTART / EXIT BUTTONS
-    # --------------------------------------------------
-    def create_top_buttons(self):
+
+    # ==========================================================
+    # 6. TOMBOL RESTART & EXIT
+    # ==========================================================
+    def tampilkan_tombol_atas(self):
         frame = tk.Frame(self.root, bg=BG_MAIN)
         frame.place(x=620, y=10)
 
-        restart_btn = tk.Button(
+        tombol_restart = tk.Button(
             frame, text="Restart",
             font=("Bahnschrift SemiBold", 12),
             bg=ACCENT, fg="black",
             relief="flat",
-            command=self.restart_game
+            command=self.restart
         )
-        restart_btn.pack(side="left", padx=5)
-        self.add_hover(restart_btn)
+        tombol_restart.pack(side="left", padx=5)
+        self.efek_hover(tombol_restart)
 
-        exit_btn = tk.Button(
+        tombol_keluar = tk.Button(
             frame, text="Exit",
             font=("Bahnschrift SemiBold", 12),
             bg=ACCENT, fg="black",
             relief="flat",
             command=self.root.quit
         )
-        exit_btn.pack(side="left", padx=5)
-        self.add_hover(exit_btn)
+        tombol_keluar.pack(side="left", padx=5)
+        self.efek_hover(tombol_keluar)
 
-    def restart_game(self):
+
+    def restart(self):
         for w in self.root.winfo_children():
             w.destroy()
         self.root.withdraw()
         self.targets = []
         self.game_over = False
-        self.show_settings_popup()
+        self.tampilkan_pengaturan()
 
-    # --------------------------------------------------
-    # SPAWN TARGETS (3 ACTIVE)
-    # --------------------------------------------------
+
+    # ==========================================================
+    # 7. SPAWN TARGET (Selalu 3 target aktif)
+    # ==========================================================
     def spawn_target(self):
-        if self.game_over: return
+        if self.game_over: 
+            return
 
         while len(self.targets) < 3:
-            r = self.target_radius
+            r = self.radius_target
             x = random.randint(self.spawn_x1 + r, self.spawn_x2 - r)
             y = random.randint(self.spawn_y1 + r, self.spawn_y2 - r)
 
-            outer = self.canvas.create_oval(
+            outer = self.kanvas.create_oval(
                 x-r, y-r, x+r, y+r,
                 fill=TARGET_OUTER, outline=TARGET_BORDER, width=3
             )
-            middle = self.canvas.create_oval(
+            middle = self.kanvas.create_oval(
                 x-r*0.6, y-r*0.6, x+r*0.6, y+r*0.6,
                 fill=BG_MAIN, outline=TARGET_OUTER, width=2
             )
-            inner = self.canvas.create_oval(
+            inner = self.kanvas.create_oval(
                 x-r*0.28, y-r*0.28, x+r*0.28, y+r*0.28,
                 fill=TARGET_INNER, outline=TARGET_BORDER, width=2
             )
 
             self.targets.append((outer, middle, inner))
 
-    # --------------------------------------------------
-    # REMOVE TARGET
-    # --------------------------------------------------
-    def remove_target(self, target):
-        for part in target:
-            self.canvas.delete(part)
-        if target in self.targets:
-            self.targets.remove(target)
+
+    # ==========================================================
+    # 8. HAPUS TARGET & RESPAWN
+    # ==========================================================
+    def hapus_target(self, t):
+        for bagian in t:
+            self.kanvas.delete(bagian)
+
+        if t in self.targets:
+            self.targets.remove(t)
+
         if not self.game_over:
             self.spawn_target()
 
-    # --------------------------------------------------
-    # CLICK HANDLER
-    # --------------------------------------------------
-    def click_target(self, event):
-        clicked = False
 
-        for target in self.targets:
-            outer, mid, inner = target
-            x1, y1, x2, y2 = self.canvas.coords(outer)
+    # ==========================================================
+    # 9. EVENT KLIK (Hit / Miss)
+    # ==========================================================
+    def klik_target(self, event):
+        kena = False
+
+        for t in self.targets:
+            luar, tengah, dalam = t
+            x1, y1, x2, y2 = self.kanvas.coords(luar)
 
             if x1 <= event.x <= x2 and y1 <= event.y <= y2:
-                clicked = True
-                self.hits += 1
-                self.ripple_animation(event.x, event.y)
-                self.remove_target(target)
+                kena = True
+                self.tepat += 1
+                self.animasi_ripple(event.x, event.y)
+                self.hapus_target(t)
                 break
 
-        if not clicked:
-            self.misses += 1
+        if not kena:
+            self.meleset += 1
 
-        self.score_label.config(text=f"Score: {self.hits}")
+        # Update skor
+        self.label_skor.config(text=f"Skor: {self.tepat}")
 
-        total = self.hits + self.misses
-        acc = (self.hits / total) * 100 if total else 100
-        self.accuracy_label.config(text=f"Accuracy: {acc:.2f}%")
+        # Update akurasi
+        total = self.tepat + self.meleset
+        akurasi = (self.tepat / total) * 100 if total else 100
+        self.label_akurasi.config(text=f"Akurasi: {akurasi:.2f}%")
 
-    # --------------------------------------------------
-    # YELLOW NEON RIPPLE
-    # --------------------------------------------------
-    def ripple_animation(self, x, y):
+
+    # ==========================================================
+    # 10. ANIMASI RIPPLE KUNING NEON
+    # ==========================================================
+    def animasi_ripple(self, x, y):
         r = 5
-        ring = self.canvas.create_oval(
-            x-r, y-r, x+r, y+r, outline=TARGET_OUTER, width=2
-        )
+        ring = self.kanvas.create_oval(x-r, y-r, x+r, y+r, outline=TARGET_OUTER, width=2)
 
-        def expand(step=0):
-            if step > 10:
-                self.canvas.delete(ring)
+        def step(n=0):
+            if n > 10:
+                self.kanvas.delete(ring)
                 return
 
-            new_r = r + step * 4
-            self.canvas.coords(ring, x-new_r, y-new_r, x+new_r, y+new_r)
+            new_r = r + n * 4
+            self.kanvas.coords(ring, x-new_r, y-new_r, x+new_r, y+new_r)
 
-            # fade neon yellow to darker orange
-            shade = max(0, 255 - step * 15)
-            color = f"#{shade:02x}{180:02x}00"
-            self.canvas.itemconfig(ring, outline=color)
+            shade = max(0, 255 - n * 15)
+            warna = f"#{shade:02x}B400"
+            self.kanvas.itemconfig(ring, outline=warna)
 
-            self.root.after(25, lambda: expand(step+1))
+            self.root.after(25, lambda: step(n+1))
 
-        expand()
+        step()
 
-    # --------------------------------------------------
-    # TIMER UPDATE
-    # --------------------------------------------------
-    def update_time(self):
-        elapsed = time.time() - self.start_time
-        remaining = self.game_duration - elapsed
 
-        if remaining <= 0:
-            self.time_label.config(text="Time: 0.00s")
-            self.end_game()
+    # ==========================================================
+    # 11. UPDATE WAKTU PER 0.1s
+    # ==========================================================
+    def update_waktu(self):
+        elapsed = time.time() - self.mulai_waktu
+        sisa = self.durasi - elapsed
+
+        if sisa <= 0:
+            self.label_waktu.config(text="Waktu: 0.00s")
+            self.game_selesai()
             return
 
-        self.time_label.config(text=f"Time: {remaining:.2f}s")
-        self.root.after(100, self.update_time)
+        self.label_waktu.config(text=f"Waktu: {sisa:.2f}s")
+        self.root.after(100, self.update_waktu)
 
-    # --------------------------------------------------
-    # GAME OVER
-    # --------------------------------------------------
-    def end_game(self):
+
+    # ==========================================================
+    # 12. GAME OVER
+    # ==========================================================
+    def game_selesai(self):
         self.game_over = True
 
         for t in self.targets:
-            for part in t:
-                self.canvas.delete(part)
+            for bagian in t:
+                self.kanvas.delete(bagian)
         self.targets.clear()
 
-        total = self.hits + self.misses
-        acc = (self.hits / total) * 100 if total else 100
+        total = self.tepat + self.meleset
+        akurasi = (self.tepat / total) * 100 if total else 100
 
-        self.canvas.create_text(
+        self.kanvas.create_text(
             400, 250,
-            text=f"GAME OVER\nScore: {self.hits}\nAccuracy: {acc:.2f}%",
+            text=f"GAME OVER\nSkor: {self.tepat}\nAkurasi: {akurasi:.2f}%",
             font=("Bahnschrift SemiBold", 32),
             fill=ACCENT
         )
 
-
-# --------------------------------------------------
-# RUN GAME
-# --------------------------------------------------
+# ==========================================================
+# JALANKAN PROGRAM
+# ==========================================================
 if __name__ == "__main__":
     root = tk.Tk()
     AimTrainer(root)
